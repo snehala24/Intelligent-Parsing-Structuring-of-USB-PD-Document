@@ -14,20 +14,6 @@ It was developed as part of a professional assignment to demonstrate **document 
 - **Validate** TOC vs parsed sections and output an **Excel report**  
 - Achieve **90%+ accuracy** in extraction — final run achieved **100% match** ✅  
 
----
-
-## **Folder Structure**
-project_folder/
-├── pdf_toc_parser.py # Extracts TOC from PDF and saves to JSONL
-├── pdf_section_parser.py # Parses all sections based on TOC and saves content
-├── validation_report.py # Validates TOC vs parsed sections, saves Excel report
-├── jsonl_schema.py # JSONL schema definitions for TOC and Section files
-├── usb_pd_spec.pdf # The USB PD Specification PDF (input)
-├── usb_pd_toc.jsonl # Output: TOC hierarchy JSONL
-├── usb_pd_spec.jsonl # Output: Complete sections JSONL
-├── usb_pd_metadata.jsonl # Output: Document metadata
-├── usb_pd_validation_report.xlsx # Output: Excel validation report
-└── README.md # Project documentation
 
 
 ---
