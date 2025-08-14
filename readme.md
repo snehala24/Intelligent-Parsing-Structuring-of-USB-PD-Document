@@ -95,7 +95,7 @@ Your validation results were:
 
 ---
 
-## **Deliverables as per Assignment**
+## **Deliverables**
 - `usb_pd_toc.jsonl` → Clean TOC with hierarchy ✅  
 - `usb_pd_spec.jsonl` → Parsed sections + content ✅  
 - `usb_pd_metadata.jsonl` → Document metadata ✅  
