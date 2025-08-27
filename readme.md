@@ -16,19 +16,36 @@ It was developed as part of a professional assignment to demonstrate **document 
 
 ---
 
-## **Folder Structure**
-project_folder/
-├── pdf_toc_parser.py # Extracts TOC from PDF and saves to JSONL
-├── pdf_section_parser.py # Parses all sections based on TOC and saves content
-├── validation_report.py # Validates TOC vs parsed sections, saves Excel report
-├── jsonl_schema.py # JSONL schema definitions for TOC and Section files
-├── usb_pd_spec.pdf # The USB PD Specification PDF (input)
-├── usb_pd_toc.jsonl # Output: TOC hierarchy JSONL
-├── usb_pd_spec.jsonl # Output: Complete sections JSONL
-├── usb_pd_metadata.jsonl # Output: Document metadata
-├── usb_pd_validation_report.xlsx # Output: Excel validation report
-└── README.md # Project documentation
+### **📁 Project Structure**
 
+```
+Trail 2/
+├── main.py                           # Original FastAPI server
+├── main_improved.py                  # 🆕 Improved FastAPI server
+├── run_tests.py                      # 🆕 Test runner script
+├── run_legacy_scripts.py             # 🆕 Legacy script runner
+├── requirements.txt                  # 🆕 Dependency management
+├── README_IMPROVED.md               # 🆕 This documentation
+│
+├── usb-pd-parser-backend/           # Backend processing scripts
+│   ├── pdf_processor.py             # 🆕 Class-based PDF processor
+│   ├── test_pdf_processor.py        # 🆕 Unit tests
+│   ├── pdf_toc_parser.py            # ✅ Refactored (reduced complexity)
+│   ├── pdf_section_parser.py        # ✅ Refactored (reduced complexity)
+│   ├── validation_report.py         # ✅ Refactored (reduced complexity)
+│   └── jsonl_schema.py              # ✅ Fixed long lines
+│
+├── usb-pd-parser-frontend/          # React frontend application
+│   ├── src/
+│   ├── package.json
+│   └── ...
+│
+└── output/                          # Generated files
+    ├── usb_pd_toc.jsonl
+    ├── usb_pd_spec.jsonl
+    ├── usb_pd_metadata.jsonl
+    └── usb_pd_validation_report.xlsx
+```
 
 ---
 
