@@ -38,7 +38,11 @@ def clean_content(text):
     # Remove excessive whitespace
     text = re.sub(r'\n\s*\n\s*\n', '\n\n', text)
     # Remove page headers/footers (common patterns)
-    text = re.sub(r'Universal Serial Bus Power Delivery Specification.*?\n', '', text)
+    text = re.sub(
+        r'Universal Serial Bus Power Delivery Specification.*?\n', 
+        '', 
+        text
+    )
     text = re.sub(r'Page \d+.*?\n', '', text)
     
     return text.strip()
@@ -52,7 +56,8 @@ def extract_sections(pdf_path, toc):
             total_pages = len(pdf.pages)
             
             for i, toc_entry in enumerate(tqdm(toc, desc="Parsing sections")):
-                start_page = max(0, toc_entry['page'] - 1)  # pdfplumber zero-based
+                # pdfplumber zero-based
+                start_page = max(0, toc_entry['page'] - 1)
                 
                 # Determine end page for this section
                 if i + 1 < len(toc):
@@ -78,26 +83,50 @@ def extract_sections(pdf_path, toc):
     
     return sections
 
+def validate_section_fields(section):
+    """Validate required fields in a section"""
+    required_fields = [
+        'doc_title', 'section_id', 'title', 'full_path', 
+        'page', 'level', 'parent_id', 'tags', 'content'
+    ]
+    missing_fields = [
+        field for field in required_fields 
+        if field not in section
+    ]
+    
+    if missing_fields:
+        return f"Section {section.get('section_id', 'unknown')}: missing fields {missing_fields}"
+    return None
+
+
+def validate_section_data_types(section):
+    """Validate data types in a section"""
+    issues = []
+    
+    if not isinstance(section['page'], int) or section['page'] < 1:
+        issues.append(f"Section {section['section_id']}: invalid page number")
+        
+    if not isinstance(section['level'], int) or section['level'] < 1:
+        issues.append(f"Section {section['section_id']}: invalid level")
+    
+    return issues
+
+
 def validate_sections(sections):
-    """Basic validation of extracted sections"""
+    """Basic validation of extracted sections with reduced complexity"""
     valid_sections = []
     issues = []
     
     for section in sections:
         # Check required fields
-        required_fields = ['doc_title', 'section_id', 'title', 'full_path', 'page', 'level', 'parent_id', 'tags', 'content']
-        missing_fields = [field for field in required_fields if field not in section]
-        
-        if missing_fields:
-            issues.append(f"Section {section.get('section_id', 'unknown')}: missing fields {missing_fields}")
+        field_issue = validate_section_fields(section)
+        if field_issue:
+            issues.append(field_issue)
             continue
             
         # Check data types
-        if not isinstance(section['page'], int) or section['page'] < 1:
-            issues.append(f"Section {section['section_id']}: invalid page number")
-            
-        if not isinstance(section['level'], int) or section['level'] < 1:
-            issues.append(f"Section {section['section_id']}: invalid level")
+        type_issues = validate_section_data_types(section)
+        issues.extend(type_issues)
             
         valid_sections.append(section)
     

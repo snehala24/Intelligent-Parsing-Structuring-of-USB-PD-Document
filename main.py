@@ -1,7 +1,11 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-import shutil, subprocess, json, os, sys
+import shutil
+import subprocess
+import json
+import os
+import sys
 
 app = FastAPI()
 
@@ -24,6 +28,7 @@ app.add_middleware(
 # ✅ Use the same Python interpreter as the FastAPI server
 python_executable = sys.executable
 
+
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
     pdf_filename = "uploaded.pdf"
@@ -34,9 +39,22 @@ async def upload_file(file: UploadFile = File(...)):
 
     # 2️⃣ Run parsing pipeline with correct Python environment
     try:
-        subprocess.run([python_executable, "pdf_toc_parser.py", pdf_filename, "USB PD Specification"], check=True)
-        subprocess.run([python_executable, "pdf_section_parser.py", pdf_filename, "usb_pd_toc.jsonl"], check=True)
-        subprocess.run([python_executable, "validation_report.py"], check=True)
+        subprocess.run([
+            python_executable, 
+            "pdf_toc_parser.py", 
+            pdf_filename, 
+            "USB PD Specification"
+        ], check=True)
+        subprocess.run([
+            python_executable, 
+            "pdf_section_parser.py", 
+            pdf_filename, 
+            "usb_pd_toc.jsonl"
+        ], check=True)
+        subprocess.run([
+            python_executable, 
+            "validation_report.py"
+        ], check=True)
     except subprocess.CalledProcessError as e:
         return {"error": f"Processing failed: {e}"}
 
@@ -49,6 +67,7 @@ async def upload_file(file: UploadFile = File(...)):
     else:
         return {"error": "TOC file not found after processing"}
 
+
 @app.get("/results")
 def get_results():
     toc_file = "usb_pd_toc.jsonl"
@@ -58,6 +77,7 @@ def get_results():
         return results
     else:
         return {"error": "Results file not found"}
+
 
 @app.get("/download/{filename}")
 def download_file(filename: str):

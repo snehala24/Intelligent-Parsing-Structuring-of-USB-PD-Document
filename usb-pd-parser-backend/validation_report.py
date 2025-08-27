@@ -25,45 +25,68 @@ def load_jsonl(filename):
         return pd.DataFrame()
     return pd.DataFrame(data)
 
-def compare_toc_and_sections(toc_df, sections_df):
-    results = []
-    
-    # Compare section_ids and order
-    toc_ids = toc_df['section_id'].tolist()
-    parsed_ids = sections_df['section_id'].tolist()
-    
-    missing = list(set(toc_ids) - set(parsed_ids))
-    extra = list(set(parsed_ids) - set(toc_ids))
-    
-    # Fix order error detection - compare actual order
+def detect_order_errors(toc_ids, parsed_ids):
+    """Detect order errors between TOC and parsed sections"""
     order_errors = []
     for i, toc_id in enumerate(toc_ids):
         if toc_id in parsed_ids:
             parsed_idx = parsed_ids.index(toc_id)
             if parsed_idx != i:
-                order_errors.append(f"Section {toc_id} at position {parsed_idx}, expected {i}")
-    
-    # Table/count detection via regex (improved)
+                order_errors.append(
+                    f"Section {toc_id} at position {parsed_idx}, expected {i}"
+                )
+    return order_errors
+
+
+def count_tables_in_content(sections_df):
+    """Count tables in section content"""
     table_re = r"(?i)(table\s+\d+)"  # Case insensitive
-    
-    # Count tables in TOC titles
-    toc_tables = 0
-    if 'title' in toc_df.columns:
-        toc_tables = toc_df['title'].str.contains('Table', case=False, na=False).sum()
-    
-    # Count tables in section content
     parsed_tables = 0
+    
     if 'content' in sections_df.columns:
         for content in sections_df['content']:
             if isinstance(content, str):
                 matches = re.findall(table_re, content)
                 parsed_tables += len(matches)
     
-    # Additional metrics
-    avg_content_length = sections_df['content'].str.len().mean() if 'content' in sections_df.columns else 0
-    empty_content_count = sections_df['content'].isna().sum() if 'content' in sections_df.columns else 0
+    return parsed_tables
+
+
+def calculate_content_metrics(sections_df):
+    """Calculate content-related metrics"""
+    if 'content' not in sections_df.columns:
+        return 0, 0
     
-    results.append({
+    avg_content_length = sections_df['content'].str.len().mean()
+    empty_content_count = sections_df['content'].isna().sum()
+    
+    return avg_content_length, empty_content_count
+
+
+def compare_toc_and_sections(toc_df, sections_df):
+    """Compare TOC and sections with reduced complexity"""
+    # Compare section_ids and order
+    toc_ids = toc_df['section_id'].tolist()
+    parsed_ids = sections_df['section_id'].tolist()
+    
+    missing = list(set(toc_ids) - set(parsed_ids))
+    extra = list(set(parsed_ids) - set(toc_ids))
+    order_errors = detect_order_errors(toc_ids, parsed_ids)
+    
+    # Count tables in TOC titles
+    toc_tables = 0
+    if 'title' in toc_df.columns:
+        toc_tables = toc_df['title'].str.contains(
+            'Table', case=False, na=False
+        ).sum()
+    
+    # Count tables in section content
+    parsed_tables = count_tables_in_content(sections_df)
+    
+    # Calculate content metrics
+    avg_content_length, empty_content_count = calculate_content_metrics(sections_df)
+    
+    results = [{
         "toc_section_count": len(toc_ids),
         "parsed_section_count": len(parsed_ids),
         "toc_table_count": toc_tables,
@@ -72,18 +95,25 @@ def compare_toc_and_sections(toc_df, sections_df):
         "extra_sections": extra,
         "order_errors": order_errors,
         "gaps": missing,  # Keep for backward compatibility
-        "matched": len(missing)==0 and len(extra)==0 and len(order_errors)==0,
+        "matched": len(missing) == 0 and len(extra) == 0 and len(order_errors) == 0,
         "avg_content_length": avg_content_length,
         "empty_content_sections": empty_content_count
-    })
+    }]
     
     return pd.DataFrame(results)
 
 def generate_detailed_report(toc_df, sections_df, validation_df):
     """Generate detailed comparison report"""
-    with pd.ExcelWriter('usb_pd_validation_report.xlsx', engine='openpyxl') as writer:
+    with pd.ExcelWriter(
+        'usb_pd_validation_report.xlsx', 
+        engine='openpyxl'
+    ) as writer:
         # Main validation summary
-        validation_df.to_excel(writer, sheet_name='Validation Summary', index=False)
+        validation_df.to_excel(
+            writer, 
+            sheet_name='Validation Summary', 
+            index=False
+        )
         
         # Section-by-section comparison
         if not toc_df.empty and not sections_df.empty:
@@ -94,7 +124,11 @@ def generate_detailed_report(toc_df, sections_df, validation_df):
                 how='outer', 
                 suffixes=('_toc', '_parsed')
             )
-            comparison.to_excel(writer, sheet_name='Section Comparison', index=False)
+            comparison.to_excel(
+                writer, 
+                sheet_name='Section Comparison', 
+                index=False
+            )
         
         # Content statistics
         if 'content' in sections_df.columns:
@@ -105,7 +139,11 @@ def generate_detailed_report(toc_df, sections_df, validation_df):
                 'has_content': sections_df['content'].notna() & (sections_df['content'] != ''),
                 'word_count': sections_df['content'].str.split().str.len()
             })
-            content_stats.to_excel(writer, sheet_name='Content Statistics', index=False)
+            content_stats.to_excel(
+                writer, 
+                sheet_name='Content Statistics', 
+                index=False
+            )
 
 if __name__ == '__main__':
     print("Loading JSONL files...")
@@ -133,4 +171,5 @@ if __name__ == '__main__':
         print(f"Missing: {len(result['missing_sections'])}")
         print(f"Extra: {len(result['extra_sections'])}")
         print(f"Order Errors: {len(result['order_errors'])}")
-        print(f"Match Status: {'✅ PERFECT' if result['matched'] else '❌ ISSUES FOUND'}")
+        status = '✅ PERFECT' if result['matched'] else '❌ ISSUES FOUND'
+        print(f"Match Status: {status}")
